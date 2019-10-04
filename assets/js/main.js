@@ -38,6 +38,9 @@ document.addEventListener("DOMContentLoaded", function(){
       // The first parameter can be set to null to load all meshes and skeletons
       BABYLON.SceneLoader.ImportMesh("", "./dist/obj/", "head3d.obj", this.scene, function (meshes, particleSystems, skeletons) {
 
+        const loader = document.getElementById('loader');
+        loader.parentNode.removeChild(loader);
+
         /*
           ---
           0 -> Head

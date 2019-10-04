@@ -78,6 +78,42 @@ canvas#babylon{
   }
 }
 
+#loader{
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 7vw;
+  height: 7vw;
+  border-radius: 50%;
+  border-left: solid 0.5vw White;
+  border-right: solid 0.5vw White;
+  animation: ROTATE_LOADER 1s infinite linear;
+  transform-origin: top left;
+
+  &:after{
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%) rotate(90deg);
+    width: 60%;
+    height: 60%;
+    border-left: solid 0.3vw White;
+    border-right: solid 0.3vw White;
+    border-radius: 50%;
+  }
+
+  @keyframes ROTATE_LOADER{
+    0%{
+      transform: rotate(0deg) translate(-50%, -50%);
+    }
+    100%{
+      transform: rotate(360deg) translate(-50%, -50%);
+    }
+  }
+
+}
+
 .desktop_only{
   display: block;
 }

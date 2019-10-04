@@ -24,16 +24,44 @@ document.addEventListener("DOMContentLoaded", function(){
       this.setCamera();
       this.setLights();
       this.loadObjects();
-
-      window.addEventListener("mousemove", this.turnHead);
-      window.addEventListener("click", this.onWindowClick);
-      window.addEventListener('resize', this.onWindowResize);
-      this.onWindowResize();
+      this.bindEvents();
 
       this.engine.runRenderLoop(() => {
         this.scene.render();
       });
 
+    }
+
+    bindEvents = () => {
+      window.addEventListener("mousemove", this.getMousePosition);
+      window.addEventListener("click", this.onWindowClick);
+      window.addEventListener('resize', this.onWindowResize);
+      this.onWindowResize();
+
+      if (window.DeviceOrientationEvent) {
+        window.addEventListener("deviceorientation", function () {
+          getDevicePosition(event.alpha, event.gamma);
+        }, true);
+      } else if (window.DeviceMotionEvent) {
+        window.addEventListener('devicemotion', function () {
+            getDevicePosition(event.acceleration.x * 2, event.acceleration.y * 2);
+        }, true);
+      } else {
+        window.addEventListener("MozOrientation", function () {
+            getDevicePosition(orientation.x * 50, orientation.y * 50);
+        }, true);
+      }
+    }
+
+    getDevicePosition = (x, y) => {
+      const relativeYPositionPercentage = 100 / 180 * (x + 90);
+      if( relativeYPositionPercentage < 0 ){ relativeYPositionPercentage = 0; }
+      if( relativeYPositionPercentage > 100 ){ relativeYPositionPercentage = 100; }
+
+      const relativeXPositionPercentage = 100 / 180 * (y + 90);
+      if( relativeXPositionPercentage < 0 ){ relativeXPositionPercentage = 0; }
+      if( relativeXPositionPercentage > 100 ){ relativeXPositionPercentage = 100; }
+      this.turnHead(mousePosXPercentage, mousePosYPercentage);
     }
 
     setCamera = () => {
@@ -204,7 +232,7 @@ document.addEventListener("DOMContentLoaded", function(){
 
     onWindowClick = (e) => {
       this.stare = !this.stare
-      this.turnHead(e);
+      this.getMousePosition(e);
     }
 
     setLights = () => {
@@ -221,17 +249,21 @@ document.addEventListener("DOMContentLoaded", function(){
       spotLightLower.intensity = 1;
     }
 
-    turnHead = (e) => {
+    getMousePosition = (e) => {
       const windowWidth = window.innerWidth;
       const windowHeight = window.innerHeight;
       const mousePosXPercentage = 100 / windowWidth * e.clientX;
       const mousePosYPercentage = 100 / windowHeight * e.clientY;
+      this.turnHead(mousePosXPercentage, mousePosYPercentage);
+    }
+
+    turnHead = (x, y) => {
 
       if(this.head){
 
         const head = this.head;
-        const turnXHead = (head.rangeRotationX / 100 * mousePosXPercentage + head.minRotationX) * -1;
-        const turnYHead = head.rangeRotationY / 100 * mousePosYPercentage + head.minRotationY;
+        const turnXHead = (head.rangeRotationX / 100 * x + head.minRotationX) * -1;
+        const turnYHead = head.rangeRotationY / 100 * y + head.minRotationY;
         head.rotation.x = turnYHead;
         head.rotation.y = turnXHead;
 
@@ -268,18 +300,18 @@ document.addEventListener("DOMContentLoaded", function(){
         }
 
         const eyeLeft = this.pivotEyeLeft;
-        let turnXEyeLeft = (eyeLeft.rangeRotationX / 100 * mousePosXPercentage + eyeLeft.minRotationX) * -1;
-        let turnYEyeLeft = eyeLeft.rangeRotationY / 100 * mousePosYPercentage + eyeLeft.minRotationY;
-        this.stare ? turnXEyeLeft *=  -1 : null;
-        this.stare ? turnYEyeLeft *=  -1 : null;
+        let turnXEyeLeft = (eyeLeft.rangeRotationX / 100 * x + eyeLeft.minRotationX) * -1;
+        let turnYEyeLeft = eyeLeft.rangeRotationY / 100 * y + eyeLeft.minRotationY;
+        this.stare ? turnXEyeLeft *=  -1.8 : null;
+        this.stare ? turnYEyeLeft *=  -1.8 : null;
         eyeLeft.rotation.x = turnYEyeLeft;
         eyeLeft.rotation.y = turnXEyeLeft;
 
         const eyeRight = this.pivotEyeRight;
-        let turnXEyeRight = (eyeRight.rangeRotationX / 100 * mousePosXPercentage + eyeRight.minRotationX) * -1;
-        let turnYEyeRight = eyeRight.rangeRotationY / 100 * mousePosYPercentage + eyeRight.minRotationY;
-        this.stare ? turnXEyeRight *=  -1 : null;
-        this.stare ? turnYEyeRight *=  -1 : null;
+        let turnXEyeRight = (eyeRight.rangeRotationX / 100 * x + eyeRight.minRotationX) * -1;
+        let turnYEyeRight = eyeRight.rangeRotationY / 100 * y + eyeRight.minRotationY;
+        this.stare ? turnXEyeRight *=  -1.8 : null;
+        this.stare ? turnYEyeRight *=  -1.8 : null;
         eyeRight.rotation.x = turnYEyeRight;
         eyeRight.rotation.y = turnXEyeRight;
 

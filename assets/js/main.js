@@ -21,18 +21,41 @@ document.addEventListener("DOMContentLoaded", function(){
       this.scene.clearColor = new BABYLON.Color4(0,0,0,1);
       this.stare = false;
 
-      const licht = new BABYLON.HemisphericLight("licht", new BABYLON.Vector3(0, 200, 0), this.scene);
-      licht.diffuse = new BABYLON.Color3(1, 1, 1);
+      this.setCamera();
+      this.setLights();
+      this.loadObjects();
 
-      const spotLightFront = new BABYLON.SpotLight('spotlight', new BABYLON.Vector3(0, 0, 400), new BABYLON.Vector3(0, 0, 0), Math.PI * 2, 0, this.scene);
-      spotLightFront.intensity = 1;
-      const spotLightLeft = new BABYLON.SpotLight('spotlight', new BABYLON.Vector3(400, -200, 100), new BABYLON.Vector3(0, 0, 0), Math.PI * 2, 0, this.scene);
-      spotLightLeft.intensity = 1;
-      const spotLightRight = new BABYLON.SpotLight('spotlight', new BABYLON.Vector3(-400, -200, 100), new BABYLON.Vector3(0, 0, 0), Math.PI * 2, 0, this.scene);
-      spotLightRight.intensity = 1;
-      const spotLightLower = new BABYLON.SpotLight('spotlight', new BABYLON.Vector3(0, -200, 200), new BABYLON.Vector3(0, 0, 0), Math.PI * 2, 0, this.scene);
-      spotLightLower.intensity = 1;
+      window.addEventListener("mousemove", this.turnHead);
+      window.addEventListener("click", this.onWindowClick);
+      window.addEventListener('resize', this.onWindowResize);
+      this.onWindowResize();
 
+      this.engine.runRenderLoop(() => {
+        this.scene.render();
+      });
+
+    }
+
+    setCamera = () => {
+      // UniversalCamera
+      const camera = this.camera = new BABYLON.UniversalCamera("camera", new BABYLON.Vector3(0, 0, 800), this.scene);
+      camera.setTarget(BABYLON.Vector3.Zero());
+
+      // // ArcRotateCamera
+      // const camera = new BABYLON.ArcRotateCamera("camera", 0, 0, 400, new BABYLON.Vector3(0,0,0), this.scene);
+      // camera.alpha = Math.PI / 180 * 75;
+      // camera.beta = Math.PI / 180 * 90;
+      // camera.lowerAlphaLimit = Math.PI / 180 * 30; // or any radian value
+      // camera.upperAlphaLimit = Math.PI / 180 * 150; // or any radian value
+      // camera.lowerBetaLimit = Math.PI / 180 * 60; // or any radian value
+      // camera.upperBetaLimit = Math.PI / 180 * 120; // or any radian value
+      // camera.attachControl(this.canvas, true);
+
+      camera.lowerRadiusLimit = 400;
+      camera.upperRadiusLimit = 400;
+    }
+
+    loadObjects = () => {
       const _this = this;
 
       // The first parameter can be set to null to load all meshes and skeletons
@@ -177,34 +200,25 @@ document.addEventListener("DOMContentLoaded", function(){
         });
 
       });
+    }
 
-      // UniversalCamera
-      const camera = new BABYLON.UniversalCamera("camera", new BABYLON.Vector3(0, 0, 800), this.scene);
-      camera.setTarget(BABYLON.Vector3.Zero());
+    onWindowClick = (e) => {
+      this.stare = !this.stare
+      this.turnHead(e);
+    }
 
-      // // ArcRotateCamera
-      // const camera = new BABYLON.ArcRotateCamera("camera", 0, 0, 400, new BABYLON.Vector3(0,0,0), this.scene);
-      // camera.alpha = Math.PI / 180 * 75;
-      // camera.beta = Math.PI / 180 * 90;
-      // camera.lowerAlphaLimit = Math.PI / 180 * 30; // or any radian value
-      // camera.upperAlphaLimit = Math.PI / 180 * 150; // or any radian value
-      // camera.lowerBetaLimit = Math.PI / 180 * 60; // or any radian value
-      // camera.upperBetaLimit = Math.PI / 180 * 120; // or any radian value
-      // camera.attachControl(this.canvas, true);
+    setLights = () => {
+      const licht = new BABYLON.HemisphericLight("licht", new BABYLON.Vector3(0, 200, 0), this.scene);
+      licht.diffuse = new BABYLON.Color3(1, 1, 1);
 
-      camera.lowerRadiusLimit = 400;
-      camera.upperRadiusLimit = 400;
-
-      window.addEventListener("mousemove", this.turnHead);
-      window.addEventListener("click", (e) => {
-        this.stare = !this.stare
-        this.turnHead(e);
-      });
-
-      this.engine.runRenderLoop(() => {
-        this.scene.render();
-      });
-
+      const spotLightFront = new BABYLON.SpotLight('spotlight', new BABYLON.Vector3(0, 0, 400), new BABYLON.Vector3(0, 0, 0), Math.PI * 2, 0, this.scene);
+      spotLightFront.intensity = 1;
+      const spotLightLeft = new BABYLON.SpotLight('spotlight', new BABYLON.Vector3(400, -200, 100), new BABYLON.Vector3(0, 0, 0), Math.PI * 2, 0, this.scene);
+      spotLightLeft.intensity = 1;
+      const spotLightRight = new BABYLON.SpotLight('spotlight', new BABYLON.Vector3(-400, -200, 100), new BABYLON.Vector3(0, 0, 0), Math.PI * 2, 0, this.scene);
+      spotLightRight.intensity = 1;
+      const spotLightLower = new BABYLON.SpotLight('spotlight', new BABYLON.Vector3(0, -200, 200), new BABYLON.Vector3(0, 0, 0), Math.PI * 2, 0, this.scene);
+      spotLightLower.intensity = 1;
     }
 
     turnHead = (e) => {
@@ -269,6 +283,21 @@ document.addEventListener("DOMContentLoaded", function(){
         eyeRight.rotation.x = turnYEyeRight;
         eyeRight.rotation.y = turnXEyeRight;
 
+      }
+
+    }
+
+    onWindowResize = (e) => {
+      const windowWidth = window.innerWidth;
+
+      if(windowWidth < 768){
+        this.camera.position.z = 550;
+      }
+      else if(windowWidth < 1024){
+        this.camera.position.z = 650;
+      }
+      else{
+        this.camera.position.z = 800;
       }
 
     }

@@ -143,7 +143,7 @@ document.addEventListener("DOMContentLoaded", function(){
         _this.head.rangeRotationY = Math.PI / 180 * 90;
 
         _this.pivotEyeRight = new BABYLON.TransformNode('pivotEyeRight');
-        _this.pivotEyeRight.position = new BABYLON.Vector3(29.4,27,70.9);
+        _this.pivotEyeRight.position = new BABYLON.Vector3(29.4,27,72);
         _this.pivotEyeRight.parent = _this.head;
 
         _this.pivotEyeRight.maxRotationY = Math.PI / 180 * 5;
@@ -171,7 +171,7 @@ document.addEventListener("DOMContentLoaded", function(){
         meshes[3].parent = _this.pivotEyeRight;
         meshes[4].parent = _this.pivotEyeRight;
 
-        const translateRight = new BABYLON.Vector3(-29.4,-27,-70.9);
+        const translateRight = new BABYLON.Vector3(-29.4,-27,-72);
         meshes[1].position = translateRight;
         meshes[2].position = translateRight;
         meshes[3].position = translateRight;
@@ -188,7 +188,7 @@ document.addEventListener("DOMContentLoaded", function(){
         //
 
         _this.pivotEyeLeft = new BABYLON.TransformNode('pivotEyeLeft');
-        _this.pivotEyeLeft.position = new BABYLON.Vector3(-29.4,27,70.9);
+        _this.pivotEyeLeft.position = new BABYLON.Vector3(-29.4,27,72);
         _this.pivotEyeLeft.parent = _this.head;
 
         _this.pivotEyeLeft.maxRotationY = Math.PI / 180 * 10;
@@ -216,7 +216,7 @@ document.addEventListener("DOMContentLoaded", function(){
         meshes[7].parent = _this.pivotEyeLeft;
         meshes[8].parent = _this.pivotEyeLeft;
 
-        const translateLeft = new BABYLON.Vector3(29.4,-27,-70.9);
+        const translateLeft = new BABYLON.Vector3(29.4,-27,-72);
         meshes[5].position = translateLeft;
         meshes[6].position = translateLeft;
         meshes[7].position = translateLeft;

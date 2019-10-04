@@ -78,6 +78,31 @@ canvas#babylon{
   }
 }
 
+#clickme{
+  position: absolute;
+  top: 50px;
+  left: 50%;
+  background: rgba(1,1,1,0.5);
+  border: 2px white solid;
+  color: white;
+  border-radius: 5px;
+  padding: 10px 15px;
+  background: linear-gradient(45deg, rgba(255,255,255,0), rgba(255,255,255,0.2), rgba(255,255,255,0));
+  background-position-x: -200px;
+  background-repeat: no-repeat;
+  background-color: rgba(255,255,255,0);
+  transition: background-position 0.7s ease-out, background-color 0.7s ease-out;
+  transform: translateX(-50%);
+  cursor: pointer;
+  &:focus{
+    outline: none;
+  }
+  &:hover{
+    background-position-x: 200px;
+    background-color: rgba(255,255,255,0.2);
+  }
+}
+
 #loader{
   position: absolute;
   top: 50%;

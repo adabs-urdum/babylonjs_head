@@ -1,0 +1,98 @@
+html{
+  font-family: 'Gilroy', sans-serif;
+  font-weight: 200;
+  font-size: #{$BaseRemSize}px;
+  line-height: 120%;
+  color: $Black;
+  background: $Black;
+}
+
+html, body{
+  width: 100%;
+  height: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+h1, h2, h3, h4, h5, h6{
+  margin: 0;
+  padding: 0;
+  line-height: 120%;
+  font-weight: 700;
+}
+
+h1{
+  @include bs-font-size(62);
+}
+
+h2{
+  @include bs-font-size(44);
+}
+
+h3{
+  @include bs-font-size(36);
+}
+
+h4{
+  @include bs-font-size(26);
+}
+
+h5, h6{
+  @include bs-font-size(20);
+}
+
+p{
+  margin: 0;
+  padding: 0;
+}
+
+ul, li{
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+a{
+  display: inline-block;
+  text-decoration: none;
+  color: inherit;
+  transition: transform 0.3s ease-out;
+  &:hover{
+    transform: scale(1.03);
+  }
+  &:active{
+    transform: scale(0.96);
+  }
+}
+
+img, canvas{
+  display: block;
+}
+
+canvas#babylon{
+  max-width: 100%;
+  max-height: 100%;
+  &:focus{
+    outline: none;
+  }
+}
+
+.desktop_only{
+  display: block;
+}
+
+.mobile_only{
+  display: none;
+}
+
+
+@media #{BreakpointS}{
+  .mobile_only{
+    display: block;
+  }
+
+  .desktop_only{
+    display: none;
+  }
+}

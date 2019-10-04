@@ -1,0 +1,32 @@
+// Font Size set in <html>
+$BaseRemSize: 16;
+
+// Width of Screendesign
+$ScreendesignWidth: 1980;
+$MobileDesignWidth: 375;
+
+// Full viewportwidth divided by screendesign max width
+$BS: 100vw / $ScreendesignWidth;
+$MBS: 100vw / $MobileDesignWidth;
+
+// Screendesign max width and larger
+$BreakpointMAX: screen and (min-width: $ScreendesignWidth + 0px);
+
+// MacBook Pro (Retina, 15-inch, Mid 2015) screen width
+$BreakpointL: screen and (max-width: 1450px);
+
+// CLUS iPad minmax Max
+$BreakpointM: screen and (max-width: 1024px);
+
+// CLUS iPad minmax Min
+$BreakpointS: screen and (max-width: 768px);
+
+// General mobile
+$BreakpointXS: screen and (max-width: 500px);
+
+// iPad Resolution (Used to fix bugs in iOS Safari)
+$BreakpointIPadVertical: screen and (width: 768px), screen and (height: 1024px);
+
+// Colors
+$White: #FFFFFF;
+$Black: #000000;

@@ -1,0 +1,48 @@
+{
+  "name": "VanillaSetup",
+  "version": "2.0.0",
+  "description": "",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/adabs-urdum/vanilla_setup"
+  },
+  "main": "index.js",
+  "scripts": {
+    "build:setup": "mkdir -p dist/css && mkdir -p dist/js && mkdir -p assets/styles && mkdir -p assets/js && touch assets/styles/variables.scss && touch assets/styles/main.scss && touch assets/js/main.js",
+    "build:cssdev": "node-sass assets/styles/main.scss --output-style expanded --source-map dist/css/styles.min.css.map --error-bell dist/css/styles.min.css",
+    "build:cssprod": "node-sass assets/styles/main.scss --output-style compressed dist/css/styles.min.css",
+    "build:jsprod": "webpack --mode production ./assets/js/main.js --presets --output ./dist/js/functions.min.js --module-bind js=babel-loader",
+    "build:jsdev": "webpack --mode development ./assets/js/main.js --presets --output ./dist/js/functions.min.js --module-bind js=babel-loader",
+    "watch:cssdev": "onchange 'assets/styles/**/*.scss' -- npm run build:cssdev",
+    "watch:jsdev": "onchange 'assets/js/**/*.js' -- npm run build:jsdev",
+    "serve": "browser-sync start --https ${https} --proxy ${url} --files 'dist/**/*.css, dist/**/*.js, *.html, *.php' -w",
+    "postinstall": "npm run build:setup",
+    "eject": "react-scripts eject",
+    "build": "npm run build:cssprod && npm run build:jsprod",
+    "watch": "parallelshell 'npm run watch:cssdev' 'npm run watch:jsdev' 'npm run serve'"
+  },
+  "author": "Cyrill Lehmann",
+  "license": "ISC",
+  "devDependencies": {
+    "babel-polyfill": "latest",
+    "@babel/core": "^7.2.2",
+    "@babel/preset-env": "^7.2.3",
+    "@babel/plugin-proposal-class-properties": "latest",
+    "@babel/preset-react": "latest",
+    "babel-loader": "^8.0.5",
+    "webpack": "^4.29.0",
+    "webpack-cli": "^3.2.1",
+    "parallelshell": "3.0.1",
+    "autoprefixer-stylus": "latest",
+    "node-sass": "latest",
+    "browser-sync": "latest",
+    "package.json": "latest",
+    "onchange": "latest",
+    "babylonjs": "latest",
+    "babylonjs-loaders": "latest",
+    "babylonjs-materials": "latest",
+    "@babylonjs/materials": "latest",
+    "babylon-mtoon-material": "latest",
+    "@babylonjs/core": "latest"
+  }
+}

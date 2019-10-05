@@ -22,7 +22,7 @@ document.addEventListener("DOMContentLoaded", function(){
       this.stare = false;
       this.orientationPermission = false;
       this.gyroscopeActive = false;
-      this.hasGyroscope = DeviceOrientationEvent.requestPermission;
+      this.hasGyroscope = (typeof DeviceOrientationEvent !== 'undefined' && DeviceOrientationEvent.requestPermission) || navigator.userAgent.match('CriOS') || navigator.userAgent.match('iPhone');
       this.buttonGyroscope = document.getElementById('gyroscope');
       this.buttonCreep = document.getElementById('clickme');
 
@@ -51,7 +51,12 @@ document.addEventListener("DOMContentLoaded", function(){
       this.onWindowResize();
 
       this.buttonGyroscope.addEventListener('click', (e) => {
-        this.orientationPermission = DeviceOrientationEvent.requestPermission();
+        if(DeviceOrientationEvent && DeviceOrientationEvent.requestPermission){
+          this.orientationPermission = DeviceOrientationEvent.requestPermission();
+        }
+        else{
+          this.orientationPermission = true;
+        }
         this.gyroscopeActive = !this.gyroscopeActive;
         this.buttonGyroscope.classList.toggle('active');
       });

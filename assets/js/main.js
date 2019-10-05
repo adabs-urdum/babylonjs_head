@@ -23,9 +23,10 @@ document.addEventListener("DOMContentLoaded", function(){
       this.orientationPermission = false;
       this.gyroscopeActive = false;
       this.hasGyroscope = (typeof DeviceOrientationEvent !== 'undefined' && DeviceOrientationEvent.requestPermission) || navigator.userAgent.match('CriOS') || navigator.userAgent.match('iPhone');
-      this.hasWebcam = navigator.mediaDevices && typeof navigator.mediaDevices.getUserMedia !== 'undefined';
+      this.hasWebcam = typeof navigator.mediaDevices !== 'undefined' && typeof navigator.mediaDevices.getUserMedia !== 'undefined';
+      this.webcamMobile = false;
       this.firstPersonCenterPercentage = {x: 0, y:0};
-      this.buttonWebcam = document.getElementById('camera');
+      this.buttonWebcam = document.getElementById('cameraButton');
       if(this.hasWebcam){
         this.buttonWebcam.style.display = 'inline-block';
       }
@@ -82,62 +83,95 @@ document.addEventListener("DOMContentLoaded", function(){
       }
 
       if(this.hasWebcam){
-        this.video.addEventListener('play', () => {
-          const displaySize = { width: this.video.width, height: this.video.height }
-          faceapi.matchDimensions(this.video, displaySize);
-          setInterval(async () => {
-            const detections = await faceapi.detectAllFaces(this.video, new faceapi.TinyFaceDetectorOptions()).withFaceLandmarks().withFaceExpressions()
-            const resizedDetections = faceapi.resizeResults(detections, displaySize);
-
-            if(resizedDetections.length){
-              const firstPerson = {
-                height: resizedDetections[0].detection.box._height,
-                width: resizedDetections[0].detection.box._width,
-                left: resizedDetections[0].detection.box._x,
-                top: resizedDetections[0].detection.box._y
-              };
-              const firstPersonCenter = {
-                x: firstPerson.left + firstPerson.width / 2,
-                y: firstPerson.top + firstPerson.height / 2
-              };
-              const firstPersonCenterPercentage = {
-                x: 100 / this.video.width * firstPersonCenter.x,
-                y: 100 / this.video.height * firstPersonCenter.y - 10
-              };
-
-              const shakyToleranceX = 0.25;
-              const shakyToleranceY = 0.4;
-              if(Math.abs(firstPersonCenterPercentage.x - this.firstPersonCenterPercentage.x) >= shakyToleranceX){
-                const relativeX = 100 - firstPersonCenterPercentage.x;
-                this.turnHead(relativeX, this.firstPersonCenterPercentage.y + 5);
-                this.firstPersonCenterPercentage = firstPersonCenterPercentage;
-              }
-              if(Math.abs(firstPersonCenterPercentage.y - this.firstPersonCenterPercentage.y) >= shakyToleranceY){
-                const relativeX = 100 - this.firstPersonCenterPercentage.x;
-                this.turnHead(relativeX, firstPersonCenterPercentage.y + 5);
-                this.firstPersonCenterPercentage = firstPersonCenterPercentage;
-              }
-
-            }
-
-          }, 30);
-        });
+        this.video.addEventListener('play', this.getWebcamPosition);
       }
 
     }
 
+    getWebcamPosition = () => {
+      const displaySize = { width: this.video.width, height: this.video.height }
+      faceapi.matchDimensions(this.video, displaySize);
+      setInterval(async () => {
+        const detections = await faceapi.detectAllFaces(this.video, new faceapi.TinyFaceDetectorOptions()).withFaceLandmarks().withFaceExpressions()
+        const resizedDetections = faceapi.resizeResults(detections, displaySize);
+
+        if(resizedDetections.length){
+          const firstPerson = {
+            height: resizedDetections[0].detection.box._height,
+            width: resizedDetections[0].detection.box._width,
+            left: resizedDetections[0].detection.box._x,
+            top: resizedDetections[0].detection.box._y
+          };
+          const firstPersonCenter = {
+            x: firstPerson.left + firstPerson.width / 2,
+            y: firstPerson.top + firstPerson.height / 2
+          };
+          const firstPersonCenterPercentage = {
+            x: 100 / this.video.width * firstPersonCenter.x,
+            y: 100 / this.video.height * firstPersonCenter.y - 10
+          };
+
+          const shakyToleranceX = !this.webcamMobile ? 0.25 : 0.05;
+          const shakyToleranceY = !this.webcamMobile ? 0.4 : 0.05;
+          if(Math.abs(firstPersonCenterPercentage.x - this.firstPersonCenterPercentage.x) >= shakyToleranceX){
+            const relativeX = 100 - firstPersonCenterPercentage.x;
+            const relativeY = this.webcamMobile ? this.firstPersonCenterPercentage.y - 20 : this.firstPersonCenterPercentage.y + 5;
+            this.turnHead(relativeX, relativeY);
+            this.firstPersonCenterPercentage = firstPersonCenterPercentage;
+          }
+          if(Math.abs(firstPersonCenterPercentage.y - this.firstPersonCenterPercentage.y) >= shakyToleranceY){
+            const relativeX = 100 - this.firstPersonCenterPercentage.x;
+            const relativeY = this.webcamMobile ? firstPersonCenterPercentage.y - 20 : firstPersonCenterPercentage.y + 5;
+            this.turnHead(relativeX, relativeY);
+            this.firstPersonCenterPercentage = firstPersonCenterPercentage;
+          }
+
+        }
+
+      }, 30);
+    }
+
     startWebcam = () => {
+
       const _this = this;
-      navigator.getUserMedia(
-        {
-          video: {}
+      this.video.setAttribute('autoplay', true);
+      this.video.setAttribute('muted', true);
+      this.video.setAttribute('playsinline', true);
+
+      if(typeof navigator.getUserMedia !== 'undefined'){
+        navigator.getUserMedia({
+          audio: false,
+          video: {},
         },
         stream => {
           video.srcObject = stream;
           _this.webcamStream = stream;
         },
-        err => console.error(err),
-      );
+        err => {
+          console.log('webcam error');
+          console.error(err);
+        });
+      }
+      else if(typeof navigator.mediaDevices.getUserMedia !== 'undefined'){
+        navigator.mediaDevices.getUserMedia({
+          audio: false,
+          video: {
+            facingMode: 'user'
+          },
+        })
+        .then((stream) => {
+          _this.webcamMobile = true;
+          video.srcObject = stream;
+          _this.webcamStream = stream;
+          video.onloadedmetadata = (e) => {
+            video.play();
+          };
+        })
+        .catch((err) => {
+          console.log(err.name + ": " + err.message);
+        });
+      }
+
     }
 
     getDevicePosition = (x, y) => {
@@ -337,11 +371,17 @@ document.addEventListener("DOMContentLoaded", function(){
           faceapi.nets.faceLandmark68Net.loadFromUri('/models'),
           faceapi.nets.faceRecognitionNet.loadFromUri('/models'),
           faceapi.nets.faceExpressionNet.loadFromUri('/models')
-        ]).then(this.startWebcam);
+        ]).then(() => {
+          this.startWebcam();
+        }).catch((error) => {
+          console.log("Promise Rejected");
+          console.log(error);
+        });
         window.removeEventListener("mousemove", this.getMousePosition);
       }
       else{
-        this.webcamStream.getTracks().forEach(track => track.stop())
+        this.webcamStream.getTracks().forEach(track => track.stop());
+        this.video.removeEventListener('play', this.getWebcamPosition);
 
         if(!this.hasGyroscope){
           window.addEventListener("mousemove", this.getMousePosition);
@@ -420,7 +460,6 @@ document.addEventListener("DOMContentLoaded", function(){
             this.scene.beginAnimation(head, 0, animationLength, true);
             this.irisRight.material.diffuseColor = new BABYLON.Color3(1 / 255 * 70, 0, 0);
             this.irisRight.material.specularColor = new BABYLON.Color3(0.7,0.7,0.7);
-            // this.head.material.diffuseColor = new BABYLON.Color3(0.16, 0.64, 0.1);
           }
         }
         else{
@@ -433,25 +472,37 @@ document.addEventListener("DOMContentLoaded", function(){
         }
 
         const webcamFactor = -0.5;
+        const mobileWebcamFactorX = -1;
+        const mobileWebcamFactorY = -1.2;
         const stareFactor = -1.8;
 
         const eyeLeft = this.pivotEyeLeft;
-        let turnXEyeLeft = (eyeLeft.rangeRotationX / 100 * x + eyeLeft.minRotationX) * -1;
-        let turnYEyeLeft = eyeLeft.rangeRotationY / 100 * y + eyeLeft.minRotationY;
-        this.webcamActive ? turnXEyeLeft *= webcamFactor : null;
-        this.webcamActive ? turnYEyeLeft *= webcamFactor : null;
-        this.stare ? turnXEyeLeft *=  stareFactor : null;
-        this.stare ? turnYEyeLeft *=  stareFactor : null;
+        let turnXEyeLeftOrigin = (eyeLeft.rangeRotationX / 100 * x + eyeLeft.minRotationX) * -1;
+        let turnYEyeLeftOrigin = eyeLeft.rangeRotationY / 100 * y + eyeLeft.minRotationY;
+        let turnXEyeLeft = turnXEyeLeftOrigin;
+        let turnYEyeLeft = turnYEyeLeftOrigin;
+
+        this.webcamActive ? turnXEyeLeft = turnXEyeLeftOrigin * webcamFactor : null;
+        this.webcamActive ? turnYEyeLeft = turnYEyeLeftOrigin * webcamFactor : null;
+        this.stare ? turnXEyeLeft =  turnXEyeLeftOrigin * stareFactor : null;
+        this.stare ? turnYEyeLeft =  turnYEyeLeftOrigin * stareFactor : null;
+        this.webcamMobile ? turnXEyeLeft =  turnXEyeLeftOrigin * mobileWebcamFactorX : null;
+        this.webcamMobile ? turnYEyeLeft =  turnYEyeLeftOrigin * mobileWebcamFactorY : null;
         eyeLeft.rotation.x = turnYEyeLeft;
         eyeLeft.rotation.y = turnXEyeLeft;
 
         const eyeRight = this.pivotEyeRight;
-        let turnXEyeRight = (eyeRight.rangeRotationX / 100 * x + eyeRight.minRotationX) * -1;
-        let turnYEyeRight = eyeRight.rangeRotationY / 100 * y + eyeRight.minRotationY;
-        this.webcamActive ? turnXEyeRight *= webcamFactor : null;
-        this.webcamActive ? turnYEyeRight *= webcamFactor : null;
-        this.stare ? turnXEyeRight *=  stareFactor : null;
-        this.stare ? turnYEyeRight *=  stareFactor : null;
+        let turnXEyeRightOrigin = (eyeRight.rangeRotationX / 100 * x + eyeRight.minRotationX) * -1;
+        let turnYEyeRightOrigin = eyeRight.rangeRotationY / 100 * y + eyeRight.minRotationY;
+        let turnXEyeRight = turnXEyeRightOrigin;
+        let turnYEyeRight = turnYEyeRightOrigin;
+
+        this.webcamActive ? turnXEyeRight = turnXEyeRightOrigin * webcamFactor : null;
+        this.webcamActive ? turnYEyeRight = turnYEyeRightOrigin * webcamFactor : null;
+        this.stare ? turnXEyeRight = turnXEyeRightOrigin * stareFactor : null;
+        this.stare ? turnYEyeRight = turnYEyeRightOrigin * stareFactor : null;
+        this.webcamMobile ? turnXEyeRight = turnXEyeRightOrigin * mobileWebcamFactorX : null;
+        this.webcamMobile ? turnYEyeRight = turnYEyeRightOrigin * mobileWebcamFactorY : null;
         eyeRight.rotation.x = turnYEyeRight;
         eyeRight.rotation.y = turnXEyeRight;
 

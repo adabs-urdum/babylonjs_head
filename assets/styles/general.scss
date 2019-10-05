@@ -88,7 +88,7 @@ canvas#babylon{
 
 #video{
   position: absolute;
-  top: 0;
+  top: 100px;
   left: 0;
   z-index: 100;
   pointer-events: none;
@@ -124,7 +124,7 @@ button{
   }
 }
 
-#gyroscope, #camera{
+#gyroscope, #cameraButton{
   display: none;
 }
 

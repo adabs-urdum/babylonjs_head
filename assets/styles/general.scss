@@ -78,10 +78,15 @@ canvas#babylon{
   }
 }
 
-#clickme{
+.buttons{
   position: absolute;
   top: 50px;
   left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+}
+
+button{
   background: rgba(1,1,1,0.5);
   border: 2px white solid;
   color: white;
@@ -92,7 +97,10 @@ canvas#babylon{
   background-repeat: no-repeat;
   background-color: rgba(255,255,255,0);
   transition: background-position 0.7s ease-out, background-color 0.7s ease-out;
-  transform: translateX(-50%);
+  margin: 0 10px;
+  padding-top: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
   cursor: pointer;
   &:focus{
     outline: none;
@@ -101,6 +109,14 @@ canvas#babylon{
     background-position-x: 200px;
     background-color: rgba(255,255,255,0.2);
   }
+  &.active{
+    background-color: rgba(255,255,255,0.8);
+    color: black;
+  }
+}
+
+#gyroscope{
+  display: none;
 }
 
 #loader{
@@ -148,7 +164,19 @@ canvas#babylon{
 }
 
 
-@media #{BreakpointS}{
+@media #{$BreakpointS}{
+
+  #loader{
+    width: 25vw;
+    height: 25vw;
+    border-left-width: 1.5vw;
+    border-right-width: 1.5vw;
+    &:after{
+      border-left-width: 1.2vw;
+      border-right-width: 1.2vw;
+    }
+  }
+
   .mobile_only{
     display: block;
   }

@@ -86,6 +86,15 @@ canvas#babylon{
   display: flex;
 }
 
+#video{
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: 100;
+  pointer-events: none;
+  visibility: hidden;
+}
+
 button{
   background: rgba(1,1,1,0.5);
   border: 2px white solid;
@@ -115,7 +124,7 @@ button{
   }
 }
 
-#gyroscope{
+#gyroscope, #camera{
   display: none;
 }
 

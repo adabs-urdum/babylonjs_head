@@ -23,8 +23,16 @@ document.addEventListener("DOMContentLoaded", function(){
       this.orientationPermission = false;
       this.gyroscopeActive = false;
       this.hasGyroscope = (typeof DeviceOrientationEvent !== 'undefined' && DeviceOrientationEvent.requestPermission) || navigator.userAgent.match('CriOS') || navigator.userAgent.match('iPhone');
+      this.hasWebcam = navigator.mediaDevices && typeof navigator.mediaDevices.getUserMedia !== 'undefined';
+      this.firstPersonCenterPercentage = {x: 0, y:0};
+      this.buttonWebcam = document.getElementById('camera');
+      if(this.hasWebcam){
+        this.buttonWebcam.style.display = 'inline-block';
+      }
+      this.webcamActive = false;
       this.buttonGyroscope = document.getElementById('gyroscope');
       this.buttonCreep = document.getElementById('clickme');
+      this.video = document.getElementById('video');
 
       this.setCamera();
       this.setLights();
@@ -47,6 +55,7 @@ document.addEventListener("DOMContentLoaded", function(){
         window.addEventListener("click", this.getMousePosition);
       }
       this.buttonCreep.addEventListener("click", this.onCreepButtonClick);
+      this.buttonWebcam.addEventListener("click", this.onCameraButtonClick);
       window.addEventListener('resize', this.onWindowResize);
       this.onWindowResize();
 
@@ -72,6 +81,63 @@ document.addEventListener("DOMContentLoaded", function(){
         }, true);
       }
 
+      if(this.hasWebcam){
+        this.video.addEventListener('play', () => {
+          const displaySize = { width: this.video.width, height: this.video.height }
+          faceapi.matchDimensions(this.video, displaySize);
+          setInterval(async () => {
+            const detections = await faceapi.detectAllFaces(this.video, new faceapi.TinyFaceDetectorOptions()).withFaceLandmarks().withFaceExpressions()
+            const resizedDetections = faceapi.resizeResults(detections, displaySize);
+
+            if(resizedDetections.length){
+              const firstPerson = {
+                height: resizedDetections[0].detection.box._height,
+                width: resizedDetections[0].detection.box._width,
+                left: resizedDetections[0].detection.box._x,
+                top: resizedDetections[0].detection.box._y
+              };
+              const firstPersonCenter = {
+                x: firstPerson.left + firstPerson.width / 2,
+                y: firstPerson.top + firstPerson.height / 2
+              };
+              const firstPersonCenterPercentage = {
+                x: 100 / this.video.width * firstPersonCenter.x,
+                y: 100 / this.video.height * firstPersonCenter.y - 10
+              };
+
+              const shakyToleranceX = 0.25;
+              const shakyToleranceY = 0.4;
+              if(Math.abs(firstPersonCenterPercentage.x - this.firstPersonCenterPercentage.x) >= shakyToleranceX){
+                const relativeX = 100 - firstPersonCenterPercentage.x;
+                this.turnHead(relativeX, this.firstPersonCenterPercentage.y + 5);
+                this.firstPersonCenterPercentage = firstPersonCenterPercentage;
+              }
+              if(Math.abs(firstPersonCenterPercentage.y - this.firstPersonCenterPercentage.y) >= shakyToleranceY){
+                const relativeX = 100 - this.firstPersonCenterPercentage.x;
+                this.turnHead(relativeX, firstPersonCenterPercentage.y + 5);
+                this.firstPersonCenterPercentage = firstPersonCenterPercentage;
+              }
+
+            }
+
+          }, 30);
+        });
+      }
+
+    }
+
+    startWebcam = () => {
+      const _this = this;
+      navigator.getUserMedia(
+        {
+          video: {}
+        },
+        stream => {
+          video.srcObject = stream;
+          _this.webcamStream = stream;
+        },
+        err => console.error(err),
+      );
     }
 
     getDevicePosition = (x, y) => {
@@ -257,10 +323,39 @@ document.addEventListener("DOMContentLoaded", function(){
       });
     }
 
+    onCameraButtonClick = (e) => {
+      this.stare = false;
+      this.gyroscopeActive = false;
+      this.webcamActive = !this.webcamActive;
+      this.buttonCreep.classList.remove('active');
+      this.buttonGyroscope.classList.remove('active');
+      this.buttonWebcam.classList.toggle('active');
+
+      if(this.webcamActive){
+        Promise.all([
+          faceapi.nets.tinyFaceDetector.loadFromUri('/models'),
+          faceapi.nets.faceLandmark68Net.loadFromUri('/models'),
+          faceapi.nets.faceRecognitionNet.loadFromUri('/models'),
+          faceapi.nets.faceExpressionNet.loadFromUri('/models')
+        ]).then(this.startWebcam);
+        window.removeEventListener("mousemove", this.getMousePosition);
+      }
+      else{
+        this.webcamStream.getTracks().forEach(track => track.stop())
+
+        if(!this.hasGyroscope){
+          window.addEventListener("mousemove", this.getMousePosition);
+        }
+      }
+
+    }
+
     onCreepButtonClick = (e) => {
       this.stare = !this.stare
       this.buttonCreep.classList.toggle('active');
-      this.getMousePosition(e);
+      if(!this.webcamActive){
+        this.getMousePosition(e);
+      }
     }
 
     setLights = () => {
@@ -337,19 +432,26 @@ document.addEventListener("DOMContentLoaded", function(){
           }
         }
 
+        const webcamFactor = -0.5;
+        const stareFactor = -1.8;
+
         const eyeLeft = this.pivotEyeLeft;
         let turnXEyeLeft = (eyeLeft.rangeRotationX / 100 * x + eyeLeft.minRotationX) * -1;
         let turnYEyeLeft = eyeLeft.rangeRotationY / 100 * y + eyeLeft.minRotationY;
-        this.stare ? turnXEyeLeft *=  -1.8 : null;
-        this.stare ? turnYEyeLeft *=  -1.8 : null;
+        this.webcamActive ? turnXEyeLeft *= webcamFactor : null;
+        this.webcamActive ? turnYEyeLeft *= webcamFactor : null;
+        this.stare ? turnXEyeLeft *=  stareFactor : null;
+        this.stare ? turnYEyeLeft *=  stareFactor : null;
         eyeLeft.rotation.x = turnYEyeLeft;
         eyeLeft.rotation.y = turnXEyeLeft;
 
         const eyeRight = this.pivotEyeRight;
         let turnXEyeRight = (eyeRight.rangeRotationX / 100 * x + eyeRight.minRotationX) * -1;
         let turnYEyeRight = eyeRight.rangeRotationY / 100 * y + eyeRight.minRotationY;
-        this.stare ? turnXEyeRight *=  -1.8 : null;
-        this.stare ? turnYEyeRight *=  -1.8 : null;
+        this.webcamActive ? turnXEyeRight *= webcamFactor : null;
+        this.webcamActive ? turnYEyeRight *= webcamFactor : null;
+        this.stare ? turnXEyeRight *=  stareFactor : null;
+        this.stare ? turnYEyeRight *=  stareFactor : null;
         eyeRight.rotation.x = turnYEyeRight;
         eyeRight.rotation.y = turnXEyeRight;
 

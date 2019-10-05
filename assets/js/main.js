@@ -89,11 +89,20 @@ document.addEventListener("DOMContentLoaded", function(){
     }
 
     getWebcamPosition = () => {
+      this.faceDetectionCanvas = faceapi.createCanvasFromMedia(video);
+      this.faceDetectionCanvas.id = 'faceDetectionCanvas';
+      this.faceDetectionCanvas.width = 400;
+      this.faceDetectionCanvas.height = 300;
+      document.getElementById('buttons').append(this.faceDetectionCanvas);
       const displaySize = { width: this.video.width, height: this.video.height }
       faceapi.matchDimensions(this.video, displaySize);
+
       setInterval(async () => {
-        const detections = await faceapi.detectAllFaces(this.video, new faceapi.TinyFaceDetectorOptions()).withFaceLandmarks().withFaceExpressions()
+        const detections = await faceapi.detectAllFaces(this.video, new faceapi.TinyFaceDetectorOptions()).withFaceLandmarks();
         const resizedDetections = faceapi.resizeResults(detections, displaySize);
+
+        this.faceDetectionCanvas.getContext('2d').clearRect(0, 0, this.faceDetectionCanvas.width, this.faceDetectionCanvas.height)
+        faceapi.draw.drawDetections(this.faceDetectionCanvas, resizedDetections)
 
         if(resizedDetections.length){
           const firstPerson = {

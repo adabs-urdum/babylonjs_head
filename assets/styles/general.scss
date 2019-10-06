@@ -93,8 +93,9 @@ canvas#babylon{
   z-index: 100;
   pointer-events: none;
   // visibility: hidden;
-  opacity: 0.7;
+  opacity: 0.5;
   transform: translate(-50%, -20%) scaleY(0.5) scaleX(-0.5);
+  max-height: 40vw;
 }
 
 button{

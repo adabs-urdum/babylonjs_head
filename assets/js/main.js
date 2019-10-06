@@ -91,10 +91,10 @@ document.addEventListener("DOMContentLoaded", function(){
     getWebcamPosition = () => {
       this.faceDetectionCanvas = faceapi.createCanvasFromMedia(video);
       this.faceDetectionCanvas.id = 'faceDetectionCanvas';
-      this.faceDetectionCanvas.width = 400;
-      this.faceDetectionCanvas.height = 300;
+      this.faceDetectionCanvas.width = this.video.width;
+      this.faceDetectionCanvas.height = this.video.height;
       document.getElementById('buttons').append(this.faceDetectionCanvas);
-      const displaySize = { width: this.video.width, height: this.video.height }
+      const displaySize = { width: this.video.width, height: this.video.height };
       faceapi.matchDimensions(this.video, displaySize);
 
       setInterval(async () => {
@@ -105,6 +105,7 @@ document.addEventListener("DOMContentLoaded", function(){
         faceapi.draw.drawDetections(this.faceDetectionCanvas, resizedDetections)
 
         if(resizedDetections.length){
+
           const firstPerson = {
             height: resizedDetections[0].detection.box._height,
             width: resizedDetections[0].detection.box._width,
@@ -120,17 +121,27 @@ document.addEventListener("DOMContentLoaded", function(){
             y: 100 / this.video.height * firstPersonCenter.y - 10
           };
 
+          let surfacePercentage;
+          if(this.video.height < this.video.width){
+            surfacePercentage = 100 / this.video.height * firstPerson.height;
+          }
+          else{
+            surfacePercentage = 100 / this.video.width * firstPerson.width;
+          }
+          this.setHeadPosition(surfacePercentage * 0.7 - 10);
+
           const shakyToleranceX = !this.webcamMobile ? 0.25 : 0.05;
           const shakyToleranceY = !this.webcamMobile ? 0.4 : 0.05;
+          let relativeX, relativeY;
           if(Math.abs(firstPersonCenterPercentage.x - this.firstPersonCenterPercentage.x) >= shakyToleranceX){
-            const relativeX = 100 - firstPersonCenterPercentage.x;
-            const relativeY = this.webcamMobile ? this.firstPersonCenterPercentage.y - 20 : this.firstPersonCenterPercentage.y + 5;
+            relativeX = 100 - firstPersonCenterPercentage.x;
+            relativeY = this.webcamMobile ? this.firstPersonCenterPercentage.y - 20 : this.firstPersonCenterPercentage.y + 5;
             this.turnHead(relativeX, relativeY);
             this.firstPersonCenterPercentage = firstPersonCenterPercentage;
           }
           if(Math.abs(firstPersonCenterPercentage.y - this.firstPersonCenterPercentage.y) >= shakyToleranceY){
-            const relativeX = 100 - this.firstPersonCenterPercentage.x;
-            const relativeY = this.webcamMobile ? firstPersonCenterPercentage.y - 20 : firstPersonCenterPercentage.y + 5;
+            relativeX = 100 - this.firstPersonCenterPercentage.x;
+            relativeY = this.webcamMobile ? firstPersonCenterPercentage.y - 20 : firstPersonCenterPercentage.y + 5;
             this.turnHead(relativeX, relativeY);
             this.firstPersonCenterPercentage = firstPersonCenterPercentage;
           }
@@ -150,7 +161,10 @@ document.addEventListener("DOMContentLoaded", function(){
       if(typeof navigator.getUserMedia !== 'undefined'){
         navigator.getUserMedia({
           audio: false,
-          video: {},
+          video: {
+            width: this.video.width,
+            height: this.video.height
+          },
         },
         stream => {
           video.srcObject = stream;
@@ -165,13 +179,19 @@ document.addEventListener("DOMContentLoaded", function(){
         navigator.mediaDevices.getUserMedia({
           audio: false,
           video: {
-            facingMode: 'user'
+            facingMode: 'user',
+            width: this.video.width,
+            height: this.video.height
           },
         })
         .then((stream) => {
+          const width = this.video.width;
+          const height = this.video.height;
+          this.video.width = height;
+          this.video.height = width;
           _this.webcamMobile = true;
-          video.srcObject = stream;
           _this.webcamStream = stream;
+          video.srcObject = stream;
           video.onloadedmetadata = (e) => {
             video.play();
           };
@@ -381,6 +401,7 @@ document.addEventListener("DOMContentLoaded", function(){
           faceapi.nets.faceRecognitionNet.loadFromUri('/models'),
           faceapi.nets.faceExpressionNet.loadFromUri('/models')
         ]).then(() => {
+          this.video.style.visibility = 'visible';
           this.startWebcam();
         }).catch((error) => {
           console.log("Promise Rejected");
@@ -391,6 +412,8 @@ document.addEventListener("DOMContentLoaded", function(){
       else{
         this.webcamStream.getTracks().forEach(track => track.stop());
         this.video.removeEventListener('play', this.getWebcamPosition);
+        this.video.style.visibility = 'hidden';
+        this.setHeadPosition(0);
 
         if(!this.hasGyroscope){
           window.addEventListener("mousemove", this.getMousePosition);
@@ -439,13 +462,24 @@ document.addEventListener("DOMContentLoaded", function(){
       }
     }
 
+    setHeadPosition = (percentage) => {
+      const head = this.head;
+      const maxDistance = this.webcamMobile ? 400 : 700;
+      const tolerance = this.webcamMobile ? 20 : 30;
+      const newPos = maxDistance / 100 * percentage;
+      if(Math.abs(head.position.z - newPos) >= tolerance){
+        head.position.z = newPos;
+      }
+    }
+
     turnHead = (x, y) => {
 
       if(this.head){
 
         const head = this.head;
-        const turnXHead = (head.rangeRotationX / 100 * x + head.minRotationX) * -1;
-        const turnYHead = head.rangeRotationY / 100 * y + head.minRotationY;
+        let turnXHead, turnYHead;
+        turnXHead = (head.rangeRotationX / 100 * x + head.minRotationX) * -1;
+        turnYHead = head.rangeRotationY / 100 * y + head.minRotationY;
         head.rotation.x = turnYHead;
         head.rotation.y = turnXHead;
 
@@ -464,19 +498,21 @@ document.addEventListener("DOMContentLoaded", function(){
         ];
         animationBox.setKeys(keys);
         head.animations.push(animationBox);
-        if(this.stare){
-          if(head.position.z <= 5){
-            this.scene.beginAnimation(head, 0, animationLength, true);
-            this.irisRight.material.diffuseColor = new BABYLON.Color3(1 / 255 * 70, 0, 0);
-            this.irisRight.material.specularColor = new BABYLON.Color3(0.7,0.7,0.7);
+        if(!this.webcamActive){
+          if(this.stare){
+            if(head.position.z <= 5){
+              this.scene.beginAnimation(head, 0, animationLength, true);
+              this.irisRight.material.diffuseColor = new BABYLON.Color3(1 / 255 * 70, 0, 0);
+              this.irisRight.material.specularColor = new BABYLON.Color3(0.7,0.7,0.7);
+            }
           }
-        }
-        else{
-          if(head.position.z >= starePosition - 5){
-            this.scene.beginAnimation(head, animationLength, 0, true);
-            this.irisRight.material.diffuseColor = new BABYLON.Color3(1 / 255 * 45, 1 / 255 * 22.5, 0);
-            this.irisRight.material.specularColor = new BABYLON.Color3(0, 0, 0);
-            this.head.material.diffuseColor = new BABYLON.Color4(1,1,1,0);
+          else{
+            if(head.position.z >= starePosition - 5){
+              this.scene.beginAnimation(head, animationLength, 0, true);
+              this.irisRight.material.diffuseColor = new BABYLON.Color3(1 / 255 * 45, 1 / 255 * 22.5, 0);
+              this.irisRight.material.specularColor = new BABYLON.Color3(0, 0, 0);
+              this.head.material.diffuseColor = new BABYLON.Color4(1,1,1,0);
+            }
           }
         }
 

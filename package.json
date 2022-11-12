@@ -31,7 +31,7 @@
     "@babel/preset-react": "latest",
     "babel-loader": "^8.0.5",
     "webpack": "^4.29.0",
-    "webpack-cli": "^3.2.1",
+    "webpack-cli": "^3.3.12",
     "parallelshell": "3.0.1",
     "autoprefixer-stylus": "latest",
     "node-sass": "latest",
